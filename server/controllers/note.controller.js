@@ -1,30 +1,50 @@
-import uuid from 'uuid';
 import Note from '../models/note';
 import Lane from '../models/lane';
+import uuid from 'uuid/v4';
 
 export function addNote(req, res) {
-  const { note, laneId } = req.body;
-
-  if (!note || !note.task || !laneId) {
-    res.status(400).end();
+  if (!req.body.task) {
+    return res.status(403).end();
   }
 
-  const newNote = new Note({
-    task: note.task,
-  });
+  const newNote = new Note(req.body);
 
   newNote.id = uuid();
   newNote.save((err, saved) => {
     if (err) {
-      res.status(500).send(err);
+      return res.status(500).send(err);
     }
-    Lane.findOne({ id: laneId })
+    Lane.findOne({ id: req.params.laneId })
       .then(lane => {
-        lane.notes.concat([saved]);
+        lane.notes.push(saved);
         return lane.save();
       })
       .then(() => {
         res.json(saved);
       });
+  });
+}
+
+export function renameNote(req, res) {
+  Note.findOne({ id: req.params.taskId }).exec((err, note) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    note.set({ task: req.body.task });
+    note.save(() => {
+      return res.status(200).end();
+    });
+  });
+}
+
+export function deleteNote(req, res) {
+  Note.findOne({ id: req.params.taskId }).exec((err, note) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+
+    note.remove(() => {
+      return res.status(200).end();
+    });
   });
 }

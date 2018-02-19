@@ -13,7 +13,7 @@ export function addLane(req, res) {
   newLane.id = uuid();
   newLane.save((err, saved) => {
     if (err) {
-      res.status(500).send(err);
+      return res.status(500).send(err);
     }
     res.json(saved);
   });
@@ -28,6 +28,8 @@ export function getLanes(req, res) {
   });
 }
 
+
+
 export function deleteLane(req, res) {
   Lane.findOne({ id: req.params.laneId }).exec((err, lane) => {
     if (err) {
@@ -35,6 +37,19 @@ export function deleteLane(req, res) {
     }
 
     lane.remove(() => {
+      return res.status(200).end();
+    });
+  });
+}
+
+export function renameLane(req, res) {
+  Lane.findOne( {id: req.params.laneId }).exec((err, lane) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+
+    lane.set({ name: req.body.name });
+    lane.save(() => {
       return res.status(200).end();
     });
   });
